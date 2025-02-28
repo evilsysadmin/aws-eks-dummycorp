@@ -1,0 +1,22 @@
+# Archivos de Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Archivos de Terraform de salida
+crash.log
+terraform.tfvars
+terraform.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Archivos sensibles o locales
+.env
+*.bak
+*.backup
+
+# Archivos de VS Code
+.vscode/
