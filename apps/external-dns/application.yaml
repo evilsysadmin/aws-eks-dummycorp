@@ -16,7 +16,8 @@ spec:
           - evilsysadmin.click
         policy: sync
         registry: txt
-        source: ingress
+        sources: 
+          - ingress
         txtOwnerId: "k8s"
         serviceAccount:
           create: true
