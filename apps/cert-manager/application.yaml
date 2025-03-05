@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: cert-manager
+    repoURL: https://charts.jetstack.io
+    targetRevision: v1.14.3
+    helm:
+      values: |
+        installCRDs: true
+        global:
+          leaderElection:
+            namespace: cert-manager
+        prometheus:
+          enabled: false
+        serviceAccount:
+          create: true
+          annotations:
+            eks.amazonaws.com/role-arn: 'arn:aws:iam::980921756231:role/cert-manager-role'
+        # DNS01 Solver configuración para AWS Route53
+        solvers:
+          - dns01:
+              route53:
+                region: eu-west-1
+        # Habilitar recursos por defecto (ClusterIssuer, Certificate, etc.)
+        ingressShim:
+          defaultIssuerName: letsencrypt-prod
+          defaultIssuerKind: ClusterIssuer
+          defaultIssuerGroup: cert-manager.io
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
