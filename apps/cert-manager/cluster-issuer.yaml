@@ -3,13 +3,5 @@ kind: ClusterIssuer
 metadata:
   name: aws-acm-issuer
 spec:
-  acme:
-    email: info@evilsysadmin.click
-    server: https://acme-v02.api.letsencrypt.org/directory
-    privateKeySecretRef:
-      name: acm-private-key
-    solvers:
-      - dns01:
-          route53:
-            region: eu-west-1
-            domain: "evilsysadmin.click"  # Descubre automáticamente la Hosted Zone
+  acm:
+    region: eu-west-1  # Cambia a tu región de AWS
