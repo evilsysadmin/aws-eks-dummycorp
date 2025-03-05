@@ -1,18 +1,15 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-prod
+  name: aws-acm-issuer
 spec:
   acme:
+    email: info@evilsysadmin.click
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: info@evilsysadmin.click  # Reemplaza con tu email real
     privateKeySecretRef:
-      name: letsencrypt-account-key
+      name: acm-private-key
     solvers:
-    - selector:
-        dnsZones:
-          - "evilsysadmin.click"
-      dns01:
-        route53:
-          region: eu-west-1  # Asegúrate de que esta sea tu región de AWS
-          # No es necesario especificar hostedZoneID si usas Route 53 para DNS-01
+      - dns01:
+          route53:
+            region: eu-wast-1
+            domain: "evilsysadmin.click"  # Descubre automáticamente la Hosted Zone
