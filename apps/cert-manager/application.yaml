@@ -21,16 +21,6 @@ spec:
           create: true
           annotations:
             eks.amazonaws.com/role-arn: 'arn:aws:iam::980921756231:role/cert-manager-role'
-        # DNS01 Solver configuración para AWS Route53
-        solvers:
-          - dns01:
-              route53:
-                region: eu-west-1
-        # Habilitar recursos por defecto (ClusterIssuer, Certificate, etc.)
-        ingressShim:
-          defaultIssuerName: letsencrypt-prod
-          defaultIssuerKind: ClusterIssuer
-          defaultIssuerGroup: cert-manager.io
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
