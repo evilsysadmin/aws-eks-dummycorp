@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-vpc-cni
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://aws.github.io/eks-charts
+    chart: aws-vpc-cni
+    targetRevision: 1.2.6  # Usa la última versión disponible
+    helm:
+      values: |
+        env:
+          ENABLE_PREFIX_DELEGATION: "true"
+          WARM_ENI_TARGET: "1"
+          WARM_IP_TARGET: "5"
+          MINIMUM_IP_TARGET: "10"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
