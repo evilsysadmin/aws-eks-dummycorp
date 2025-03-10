@@ -1,7 +1,7 @@
 locals {
   eks_version       = "1.32"
   cluster_name      = "dummycorp"
-  eks_instance_type = "t3a.large"
+  eks_instance_type = "t3a.medium"
   eks_nodes_min_size = 4
   eks_nodes_max_size = 4
   eks_nodes_desired_size = 4
