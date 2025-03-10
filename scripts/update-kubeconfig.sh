@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+export AWS_REGION=eu-west-1
+
 # Navega al directorio infra y ejecuta el comando terraform
 CLUSTER_NAME=$(cd infra && terraform output -raw eks_cluster_name)
 
@@ -12,4 +14,3 @@ else
     aws eks update-kubeconfig --name "$CLUSTER_NAME"
 fi
 
-cd -

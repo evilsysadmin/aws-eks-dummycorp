@@ -1,0 +1,94 @@
+# ArgoCD Helm Values
+
+configs:
+  params:
+    server.insecure: true
+  repositories:
+    evilsysadmin-repo:
+      url: https://github.com/evilsysadmin/aws-eks-dummycorp.git
+      name: aws-eks-dummycorp
+      
+server:
+  ingress:
+    enabled: true
+    hostname: argocd.dummycorp.evilsysadmin.click
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/target-port: "8080"
+      alb.ingress.kubernetes.io/healthcheck-path: "/healthz"
+      alb.ingress.kubernetes.io/healthcheck-port: "8080"
+      alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
+      alb.ingress.kubernetes.io/success-codes: "200-307"
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+      alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+      alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+      external-dns.alpha.kubernetes.io/hostname: argocd.dummycorp.evilsysadmin.click
+    path: /
+    pathType: Prefix
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  
+  resources:
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+  secretkey: "your-generated-secret-key"  
+
+additionalApplications:
+  - name: app-of-apps
+    namespace: argocd
+    project: default
+    source:
+      repoURL: https://github.com/evilsysadmin/aws-eks-dummycorp.git
+      targetRevision: setup
+      path: bootstrap
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: argocd
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+
+controller:
+  enableStatefulSet: true
+  resources:
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+  appController:
+    processors:
+      operation: 5
+      status: 5
+
+repoServer:
+  resources:
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+
+redis:
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+
+timeout:
+  reconciliation: 180s
+  hard: 240s

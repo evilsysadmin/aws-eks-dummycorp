@@ -10,3 +10,6 @@ output "eks_cluster_endpoint" {
   value = module.eks.cluster_endpoint
 }
 
+output "public_subnets" {
+  value = module.vpc.public_subnets
+}
