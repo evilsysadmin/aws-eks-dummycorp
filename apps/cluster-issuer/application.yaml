@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/evilsysadmin/aws-eks-dummycorp/apps/cluster-issuer
-    targetRevision: HEAD
+    targetRevision: setup
     path: apps/cluster-issuer
   destination:
     server: https://kubernetes.default.svc
