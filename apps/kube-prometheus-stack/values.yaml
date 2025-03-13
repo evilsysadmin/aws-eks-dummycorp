@@ -1,5 +1,3 @@
-# Values para kube-prometheus-stack con dashboards básicos de K8s
-# Configuración global
 nameOverride: ""
 fullnameOverride: ""
 
