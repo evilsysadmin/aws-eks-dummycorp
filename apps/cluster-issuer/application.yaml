@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clusterissuer
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/evilsysadmin/aws-eks-dummycorp/apps/cluster-issuer
+    targetRevision: HEAD
+    path: apps/cluster-issuer
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: core-infra-apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
