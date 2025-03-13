@@ -1,15 +1,25 @@
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
+# apps/clusterissuer/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
-  name: letsencrypt-prod
+  name: clusterissuer
+  namespace: argocd
 spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: "info@evilsysadmin.click"
-    privateKeySecretRef:
-      name: letsencrypt-prod-key
-    solvers:
-    - dns01:
-        route53:
-          region: "eu-west-1"
-          hostedZoneID: {{ .Values.route53.zoneId }}
+  project: default
+  source:
+    repoURL: <tu-repo-git>
+    targetRevision: HEAD
+    path: apps/clusterissuer
+    helm:
+      valueFiles:
+      - values.yaml
+      parameters:
+      - name: route53.zoneId
+        value: "{{ (index .ConfigMaps \"route53-config\" \"zone_id\") }}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: core-infra-apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
