@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/evilsysadmin/aws-eks-dummycorp/apps/cluster-issuer
+    repoURL: https://github.com/evilsysadmin/aws-eks-dummycorp.git
     targetRevision: setup
     path: apps/cluster-issuer
   destination:
