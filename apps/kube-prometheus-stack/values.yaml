@@ -39,10 +39,10 @@ grafana:
     hosts:
       - "grafana.dummycorp.evilsysadmin.click"
     path: /
-    tls:
-      hosts:
-      - "grafana.dummycorp.evilsysadmin.click"
-    secretName: grafana-tls
+    # tls:
+    #   hosts:
+    #   - "grafana.dummycorp.evilsysadmin.click"
+    # secretName: grafana-tls
     
   sidecar:
     dashboards:
