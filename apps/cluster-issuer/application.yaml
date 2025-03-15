@@ -1,25 +1,25 @@
-# apps/clusterissuer/application.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: clusterissuer
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: <tu-repo-git>
-    targetRevision: HEAD
-    path: apps/clusterissuer
-    helm:
-      valueFiles:
-      - values.yaml
-      parameters:
-      - name: route53.zoneId
-        value: "{{ (index .ConfigMaps \"route53-config\" \"zone_id\") }}"
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: core-infra-apps
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+# # apps/clusterissuer/application.yaml
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: clusterissuer
+#   namespace: argocd
+# spec:
+#   project: default
+#   source:
+#     repoURL: <tu-repo-git>
+#     targetRevision: HEAD
+#     path: apps/clusterissuer
+#     helm:
+#       valueFiles:
+#       - values.yaml
+#       parameters:
+#       - name: route53.zoneId
+#         value: "{{ (index .ConfigMaps \"route53-config\" \"zone_id\") }}"
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: core-infra-apps
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true

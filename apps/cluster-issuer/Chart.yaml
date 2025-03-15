@@ -1,7 +1,7 @@
-# apps/clusterissuer/Chart.yaml
-apiVersion: v2
-name: clusterissuer
-description: ClusterIssuer for cert-manager
-type: application
-version: 0.1.0
-appVersion: "1.0"
+# # apps/clusterissuer/Chart.yaml
+# apiVersion: v2
+# name: clusterissuer
+# description: ClusterIssuer for cert-manager
+# type: application
+# version: 0.1.0
+# appVersion: "1.0"
