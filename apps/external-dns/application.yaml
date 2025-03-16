@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: core-infra-apps
+  name: external-dns
   namespace: argocd
 spec:
   project: default
