@@ -39,8 +39,8 @@ grafana:
     hosts:
       - "grafana.dummycorp.evilsysadmin.click"
     path: /
-    tls:
-      - []
+    # tls:
+    #   - []
     # tls:
     #   hosts:
     #   - "grafana.dummycorp.evilsysadmin.click"
