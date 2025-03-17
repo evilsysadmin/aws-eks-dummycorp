@@ -1,0 +1,25 @@
+# dummycorp-store/argocd/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dummycorp-store
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/evilsysadmin/dummycorp-store-code.git
+    targetRevision: DUMMYCORP-3
+    path: manifests/
+    directory:
+      recurse: true
+      include: "*.yaml"
+      
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dummycorp-store
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
