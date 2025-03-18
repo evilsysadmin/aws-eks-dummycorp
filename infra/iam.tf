@@ -364,3 +364,68 @@ resource "aws_iam_role_policy_attachment" "prometheus_policy_attachment" {
   role       = aws_iam_role.prometeus_role.name
   policy_arn = aws_iam_policy.prometheus_policy.arn
 }
+
+## ECR 
+
+resource "aws_iam_role" "dummycorp_ecr_role" {
+  name = "dummycorp-ecr-access"
+  
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = module.eks.oidc_provider_arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${module.eks.oidc_provider}:sub" = [
+            "system:serviceaccount:dummycorp-store:front-sa",
+            "system:serviceaccount:dummycorp-store:back-sa"
+          ]
+        }
+      }
+    }]
+  })
+}
+
+
+# 2️⃣ IAM Policy con permisos para ECR
+data "aws_caller_identity" "current" {}
+
+resource "aws_iam_policy" "dummycorp_ecr_policy" {
+  name        = "dummycorp-ecr-policy"
+  description = "Permite hacer pull de imágenes en ECR"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ecr:GetAuthorizationToken"
+      ]
+      Resource = "*"
+    },{
+      Effect = "Allow"
+      Action = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:DescribeRepositories",
+        "ecr:GetRepositoryPolicy"
+      ]
+      Resource = [
+        "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/dummycorp-store-backend",
+        "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/dummycorp-store-frontend"
+      ]
+    }]
+  })
+}
+
+
+# 3️⃣ Asociar la Policy al Role
+resource "aws_iam_role_policy_attachment" "attach_ecr_policy" {
+  role       = aws_iam_role.dummycorp_ecr_role.name
+  policy_arn = aws_iam_policy.dummycorp_ecr_policy.arn
+}

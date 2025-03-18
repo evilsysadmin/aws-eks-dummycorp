@@ -1,13 +1,10 @@
-# ArgoCD Helm Values
-
 configs:
   params:
     server.insecure: true
   repositories:
     evilsysadmin-repo:
-      url: https://github.com/evilsysadmin/aws-eks-dummycorp.git
       name: aws-eks-dummycorp
-      
+      url: https://github.com/evilsysadmin/aws-eks-dummycorp.git
 server:
   ingress:
     enabled: true
@@ -31,7 +28,6 @@ server:
     type: ClusterIP
     port: 80
     targetPort: 8080
-  
   resources:
     limits:
       cpu: "1"
@@ -39,23 +35,7 @@ server:
     requests:
       cpu: "500m"
       memory: "512Mi"
-  secretkey: "your-generated-secret-key"  
-
-additionalApplications:
-  - name: app-of-apps
-    namespace: argocd
-    project: default
-    source:
-      repoURL: https://github.com/evilsysadmin/aws-eks-dummycorp.git
-      targetRevision: setup
-      path: bootstrap
-    destination:
-      server: https://kubernetes.default.svc
-      namespace: argocd
-    syncPolicy:
-      automated:
-        prune: true
-        selfHeal: true
+  secretkey: "your-generated-secret-key"
 
 controller:
   enableStatefulSet: true
@@ -70,7 +50,6 @@ controller:
     processors:
       operation: 5
       status: 5
-
 repoServer:
   resources:
     limits:
@@ -79,7 +58,6 @@ repoServer:
     requests:
       cpu: "500m"
       memory: "512Mi"
-
 redis:
   resources:
     limits:
@@ -88,7 +66,6 @@ redis:
     requests:
       cpu: "250m"
       memory: "256Mi"
-
 timeout:
   reconciliation: 180s
   hard: 240s

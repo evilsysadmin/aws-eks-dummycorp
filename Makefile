@@ -1,11 +1,12 @@
 infra/up:
-	@tf-apply-ci
-	@argocd/setup
+	make tf-apply-ci
+	make kubeconfig
+	make argocd/setup
+	make argocd/change-password
 
-infra/destroy:
-	kubectl delete ns argocd 
-	kubectl delete ns core-infra-apps
-	@tf-destroy-ci
+infra/down:
+	scripts/delete-k8s-objects.sh
+	make tf-destroy-ci
 
 reboot:
 	kubectl delete ns argocd && make tf-apply-ci && kubectl apply -f bootstrap/infra-apps.yaml && make argocd/change-password

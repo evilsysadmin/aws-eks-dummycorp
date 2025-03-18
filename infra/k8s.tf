@@ -69,5 +69,13 @@ resource "kubernetes_config_map" "aws_iam_roles" {
   ]
 }
 
-
-
+# # Crear el ConfigMap con el Zone ID
+# resource "kubernetes_config_map" "route53_config" {
+#   metadata {
+#     name      = "route53-config"
+#     namespace = "core-infra-apps"
+#   }
+#   data = {
+#     "zone_id" = aws_route53_zone.main.zone_id
+#   }
+# }
