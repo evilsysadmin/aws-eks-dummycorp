@@ -1,6 +1,9 @@
+# argocd-apps-values.yaml
 applications:
   - name: core-infra-apps
     namespace: argocd
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
     project: default
     source:
       repoURL: https://github.com/evilsysadmin/aws-eks-dummycorp.git
@@ -19,6 +22,8 @@ applications:
 
   - name: dummycorp-store
     namespace: argocd
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
     project: default
     source:
       repoURL: https://github.com/evilsysadmin/dummycorp-store-code.git
