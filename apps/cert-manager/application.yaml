@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: core-infra-apps
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: cert-manager
+    repoURL: https://charts.jetstack.io
+    targetRevision: v1.14.3
+    helm:
+      releaseName: cert-manager
+      values: |
+        installCRDs: true
+        global:
+          leaderElection:
+            namespace: core-infra-apps 
+        prometheus:
+          enabled: false
+        serviceAccount:
+          create: true
+          annotations:
+            eks.amazonaws.com/role-arn: 'arn:aws:iam::980921756231:role/cert-manager-role'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: core-infra-apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

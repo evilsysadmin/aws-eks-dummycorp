@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-load-balancer-controller
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: aws-load-balancer-controller
+    repoURL: https://aws.github.io/eks-charts
+    targetRevision: 1.6.2
+    helm:
+      values: |
+        clusterName: dummycorp
+        serviceAccount:
+          create: true
+          name: aws-load-balancer-controller
+          annotations:
+            eks.amazonaws.com/role-arn: 'arn:aws:iam::980921756231:role/alb-ingress-controller-role'
+        region: eu-west-1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: core-infra-apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

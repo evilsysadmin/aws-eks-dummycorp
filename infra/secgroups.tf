@@ -1,3 +1,41 @@
+resource "aws_security_group" "eks_additional_sg" {
+  name        = "eks-node-additional-sg"
+  description = "Additional security group for EKS nodes to allow traffic for ALB"
+  vpc_id      = module.vpc.vpc_id
+
+  # Permitir todo el tráfico desde el ALB a los nodos
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+    description = "Allow traffic from ALB to nodes"
+  }
+
+  # Regla para permitir tráfico desde pods a nodos
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    self        = true
+    description = "Allow pod-to-node communication"
+  }
+
+  # Permitir tráfico de salida
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
+  }
+
+  tags = {
+    Name = "eks-node-additional-sg"
+  }
+}
+
+
 resource "aws_security_group" "eks_nodes" {
   vpc_id = module.vpc.vpc_id
   name   = "eks-nodes-sg"
