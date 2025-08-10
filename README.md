@@ -63,7 +63,7 @@ The deployment takes about 15-20 minutes because AWS is slow at creating EKS clu
 The Terraform creates about 86 resources, which sounds like a lot but most of it is standard AWS networking stuff:
 
 - A VPC with public and private subnets across 3 AZs
-- EKS cluster with managed node group (3 t3.medium instances by default)
+- EKS cluster with managed node group (spot instances for cost optimization)
 - All the necessary IAM roles and security groups
 - Prometheus for metrics collection
 - Grafana for dashboards with Prometheus as data source
@@ -71,6 +71,24 @@ The Terraform creates about 86 resources, which sounds like a lot but most of it
 - External DNS that manages Route53 records automatically
 
 Everything is properly tagged and follows AWS best practices. The setup uses a single NAT gateway to keep costs reasonable for development.
+
+## Instance sizing and spot instances
+
+The cluster uses spot instances by default to keep costs down. Node instances are configured as t3.large and t3.xlarge because the observability stack (Prometheus + Grafana + ArgoCD) needs decent memory to run properly.
+
+**Why larger instances:**
+- Prometheus with scraping: 2-3GB RAM
+- Grafana with dashboards: 512MB-1GB RAM  
+- ArgoCD: 512MB+ RAM
+- System overhead: 1.5GB RAM
+- t3.medium (4GB total) would result in constant OOMKills
+
+**Spot instance benefits:**
+- 60-70% cost savings compared to on-demand
+- Automatic resilience testing (occasional node terminations)
+- Multiple instance types for better availability
+
+The instance mix of t3.large (8GB) and t3.xlarge (16GB) ensures the observability stack runs smoothly while keeping costs reasonable.
 
 ## DNS and External Access
 
@@ -97,7 +115,7 @@ External DNS reads service annotations and automatically creates Route53 records
 
 ```yaml
 annotations:
-  external-dns.alpha.kubernetes.io/hostname: dev-grafana.dummycorp.evilsysadmin.click
+  external-dns.alpha.kubernetes.io/hostname: dev.grafana.dummycorp.evilsysadmin.click
   external-dns.alpha.kubernetes.io/ttl: "60"
 ```
 
@@ -117,7 +135,7 @@ cp environments/dev/terraform.tfvars environments/staging/
 make tf-apply ENV=staging
 ```
 
-This will create `staging-grafana.dummycorp.evilsysadmin.click` automatically.
+This will create `staging.grafana.dummycorp.evilsysadmin.click` automatically.
 
 ### Access and credentials
 
@@ -142,27 +160,34 @@ mkdir -p environments/prod
 cp environments/dev/terraform.tfvars environments/prod/
 # Edit prod-specific values like:
 # cluster_name = "dummycorp-prod"
-# instance_type = "t3.large"
+# instance_types = ["t3.large", "t3.xlarge"]
 # min_nodes = 3
 ```
 
 ## Costs
 
-This setup isn't cheap. You're looking at roughly:
+This setup uses spot instances to keep costs reasonable, but it's still not free:
+
+**With spot instances:**
 - EKS control plane: $73/month
-- 3x t3.medium nodes: ~$150/month
+- 3x t3.large spot nodes: ~$75/month (vs $150 on-demand)
 - NAT gateway: ~$45/month
 - Load balancers: ~$20/month each
 - Route53: $1/month
 
-Total is around $300/month. You can reduce costs by using smaller instances or fewer nodes, but remember this affects performance.
+Total is around $200/month with spot instances (vs $300+ on-demand).
 
-For cost optimization, edit `environments/dev/terraform.tfvars`:
+**Cost optimization tips:**
+- Spot instances are already enabled by default
+- Single NAT gateway instead of one per AZ
+- No persistent volumes for monitoring stack
+- LoadBalancer services only where needed
+
+For further cost reduction, edit `environments/dev/terraform.tfvars`:
 
 ```hcl
-instance_type = "t3.small"  # Saves ~$30/month
-min_nodes = 1               # Saves ~$100/month
-max_nodes = 3
+min_nodes = 1               # Start with single node
+max_nodes = 3               # Scale up when needed
 ```
 
 ## Cleanup
@@ -182,38 +207,56 @@ If the deployment fails, it's usually one of these issues:
 - **Permission errors**: Your AWS user needs more IAM permissions
 - **Resource limits**: Check your AWS service quotas
 - **Region issues**: Some resources might not be available in your region
-- **Terraform state**: Delete `.terraform` directories and re-run `terraform init`
+- **Terraform state**: Review terraform state, maybe file its corrupted. Use `terraform state list` to check
 - **DNS propagation**: External DNS records can take a few minutes to propagate
+- **Spot instance unavailability**: AWS might not have spot capacity in your AZs
 
 The most common issue is IAM permissions. The AWS user needs to be able to create EKS clusters, which requires quite a few permissions.
 
 ### Common fixes
 
 ```bash
-# Reset Terraform state
-rm -rf terraform/.terraform*
-cd terraform && terraform init
 
 # Check AWS permissions
 aws sts get-caller-identity
 aws eks describe-cluster --name test-cluster --region eu-west-1
 
 # Verify DNS records
-dig dev-grafana.dummycorp.evilsysadmin.click
+dig dev.grafana.dummycorp.evilsysadmin.click
+
+# Check spot instance availability
+aws ec2 describe-spot-price-history --instance-types t3.large --max-results 1
+```
+
+### Handling spot instance interruptions
+
+Spot instances can be terminated with 2-minute notice. The infrastructure handles this gracefully:
+
+- Multiple instance types reduce interruption risk
+- Kubernetes reschedules pods to available nodes
+- Cluster autoscaler adds new nodes when needed
+- No data loss (persistent volumes disabled by design)
+
+If you need guaranteed availability, switch to on-demand instances in your terraform.tfvars:
+
+```hcl
+# In environments/dev/terraform.tfvars
+capacity_type = "ON_DEMAND"
 ```
 
 ## What's next
 
-This is a solid foundation for a Kubernetes platform. Some things you might want to add:
+This is a solid foundation for a Kubernetes platform. Some things that could be added:
 
-- A demo application to actually run something on the cluster
+- A demo application to run workloads on the cluster
 - Loki for log aggregation (currently only metrics)
 - Certificate management with cert-manager
 - More sophisticated monitoring and alerting
 - CI/CD pipelines that deploy through ArgoCD
 - Chaos engineering tools for resilience testing
+- Pod disruption budgets for better spot instance handling
 
-The cluster is ready for GitOps workflows, so you can point ArgoCD at your application repositories and let it handle deployments.
+The cluster is ready for GitOps workflows and can be pointed at application repositories for automated deployments.
 
 ## Notes
 
@@ -223,8 +266,8 @@ The cluster uses IRSA (IAM Roles for Service Accounts) for security, which is th
 
 All persistent volumes are disabled by default to keep things simple and reduce costs. In production you'd want proper storage for Prometheus and Grafana.
 
+Spot instances provide excellent cost savings and real-world resilience testing. The occasional node termination teaches you proper Kubernetes scheduling and helps validate your application's fault tolerance.
+
 ---
 
-This project demonstrates infrastructure as code, Kubernetes, observability, and GitOps patterns. 
-
-It's meant to be a practical example of how to set up a modern platform on AWS.
+This project demonstrates infrastructure as code, Kubernetes, observability, GitOps patterns, and cost optimization strategies. It's meant to be a practical example of how to set up a modern platform on AWS without breaking the bank.
