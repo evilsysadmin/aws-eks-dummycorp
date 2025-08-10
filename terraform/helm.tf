@@ -32,40 +32,42 @@ resource "helm_release" "external_dns" {
   namespace  = "kube-system"
   version    = "6.13.1" # Especifica una versión conocida
 
-  set {
-    name  = "provider"
-    value = "aws"
-  }
+  set = [
+    {
+      name  = "provider"
+      value = "aws"
+    },
 
-  set {
-    name  = "aws.region"
-    value = local.region
-  }
+    {
+      name  = "aws.region"
+      value = local.region
+    },
 
-  set {
-    name  = "policy"
-    value = "sync"
-  }
+    {
+      name  = "policy"
+      value = "sync"
+    },
 
-  set {
-    name  = "registry"
-    value = "txt"
-  }
+    {
+      name  = "registry"
+      value = "txt"
+    },
 
-  set {
-    name  = "txtOwnerId"
-    value = module.eks.cluster_name
-  }
+    {
+      name  = "txtOwnerId"
+      value = module.eks.cluster_name
+    },
 
-  set {
-    name  = "domainFilters[0]"
-    value = "evilsysadmin.click"
-  }
+    {
+      name  = "domainFilters[0]"
+      value = "evilsysadmin.click"
+    },
 
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = aws_iam_role.external_dns_irsa_role.arn
-  }
+    {
+      name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = aws_iam_role.external_dns_irsa_role.arn
+    }
+  ]
 
   depends_on = [module.eks]
 }
