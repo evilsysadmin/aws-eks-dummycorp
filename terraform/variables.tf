@@ -19,10 +19,14 @@ variable "subnet_cidr_blocks" {
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
-variable "instance_type" {
+variable "eks_instance_types" {
   description = "EC2 instance type for EKS nodes"
-  type        = string
-  default     = "t3.medium"
+  type        = list(string)
+}
+
+variable "eks_capacity_type" {
+  type    = string
+  default = "SPOT"
 }
 
 variable "min_nodes" {
