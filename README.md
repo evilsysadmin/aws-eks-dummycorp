@@ -13,7 +13,7 @@ Pretty much a production-ready EKS cluster with all the bells and whistles:
 - Proper networking with VPC, subnets, and security groups
 - IAM roles configured correctly (IRSA and all that)
 
-The cluster is set up in eu-west-1 and uses the domain `evilsysadmin.click` for external access. Grafana will be available at `grafana.dummycorp.evilsysadmin.click` once everything is deployed.
+The cluster is set up in eu-west-1 and uses the domain `evilsysadmin.click` for external access. Services will be available at environment-specific subdomains once everything is deployed.
 
 ## Prerequisites
 
@@ -72,21 +72,79 @@ The Terraform creates about 86 resources, which sounds like a lot but most of it
 
 Everything is properly tagged and follows AWS best practices. The setup uses a single NAT gateway to keep costs reasonable for development.
 
-## Access and URLs
+## DNS and External Access
 
-After deployment, you can access:
+The infrastructure uses environment-aware DNS subdomains for all services. External DNS automatically creates Route53 records based on the environment:
 
-- **Grafana**: https://grafana.dummycorp.evilsysadmin.click (admin/admin)
-- **ArgoCD**: Check the LoadBalancer service in the argocd namespace
-- **Prometheus**: Check the LoadBalancer service in the monitoring namespace
+### Environment URLs
 
-Use `kubectl get services -A` to find the actual URLs if external DNS hasn't propagated yet.
+**Development environment (default):**
+- Grafana: `dev.grafana.dummycorp.evilsysadmin.click`
+- Prometheus: `dev.prometheus.dummycorp.evilsysadmin.click`
+- ArgoCD: `dev.argocd.dummycorp.evilsysadmin.click`
+
+**Production environment:**
+```bash
+make tf-apply ENV=prod
+```
+- Grafana: `prod.grafana.dummycorp.evilsysadmin.click`
+- Prometheus: `prod.prometheus.dummycorp.evilsysadmin.click`
+- ArgoCD: `prod.argocd.dummycorp.evilsysadmin.click`
+
+### How it works
+
+External DNS reads service annotations and automatically creates Route53 records:
+
+```yaml
+annotations:
+  external-dns.alpha.kubernetes.io/hostname: dev-grafana.dummycorp.evilsysadmin.click
+  external-dns.alpha.kubernetes.io/ttl: "60"
+```
+
+The hostnames are dynamically generated based on the environment variable, so you can run multiple environments simultaneously without DNS conflicts.
+
+### Custom environments
+
+To create a custom environment like staging:
+
+```bash
+# Create staging config
+mkdir -p environments/staging
+cp environments/dev/terraform.tfvars environments/staging/
+# Edit staging values...
+
+# Deploy staging
+make tf-apply ENV=staging
+```
+
+This will create `staging-grafana.dummycorp.evilsysadmin.click` automatically.
+
+### Access and credentials
+
+After deployment, you can access the services using the URLs above. Default credentials:
+
+- **Grafana**: admin/admin (you'll be prompted to change on first login)
+- **ArgoCD**: Check the admin secret in the argocd namespace
+- **Prometheus**: No authentication required
+
+Use `kubectl get services -A` to find LoadBalancer IPs if external DNS hasn't propagated yet.
 
 ## Environments
 
 The code supports multiple environments through the `ENV` variable. Currently there's just a dev environment configured, but you can easily add more by creating new directories under `environments/`.
 
 Each environment should have its own `terraform.tfvars` file with environment-specific settings like cluster name, instance types, and scaling parameters.
+
+Example for production:
+
+```bash
+mkdir -p environments/prod
+cp environments/dev/terraform.tfvars environments/prod/
+# Edit prod-specific values like:
+# cluster_name = "dummycorp-prod"
+# instance_type = "t3.large"
+# min_nodes = 3
+```
 
 ## Costs
 
@@ -98,6 +156,14 @@ This setup isn't cheap. You're looking at roughly:
 - Route53: $1/month
 
 Total is around $300/month. You can reduce costs by using smaller instances or fewer nodes, but remember this affects performance.
+
+For cost optimization, edit `environments/dev/terraform.tfvars`:
+
+```hcl
+instance_type = "t3.small"  # Saves ~$30/month
+min_nodes = 1               # Saves ~$100/month
+max_nodes = 3
+```
 
 ## Cleanup
 
@@ -117,8 +183,24 @@ If the deployment fails, it's usually one of these issues:
 - **Resource limits**: Check your AWS service quotas
 - **Region issues**: Some resources might not be available in your region
 - **Terraform state**: Delete `.terraform` directories and re-run `terraform init`
+- **DNS propagation**: External DNS records can take a few minutes to propagate
 
 The most common issue is IAM permissions. The AWS user needs to be able to create EKS clusters, which requires quite a few permissions.
+
+### Common fixes
+
+```bash
+# Reset Terraform state
+rm -rf terraform/.terraform*
+cd terraform && terraform init
+
+# Check AWS permissions
+aws sts get-caller-identity
+aws eks describe-cluster --name test-cluster --region eu-west-1
+
+# Verify DNS records
+dig dev-grafana.dummycorp.evilsysadmin.click
+```
 
 ## What's next
 
@@ -129,6 +211,7 @@ This is a solid foundation for a Kubernetes platform. Some things you might want
 - Certificate management with cert-manager
 - More sophisticated monitoring and alerting
 - CI/CD pipelines that deploy through ArgoCD
+- Chaos engineering tools for resilience testing
 
 The cluster is ready for GitOps workflows, so you can point ArgoCD at your application repositories and let it handle deployments.
 

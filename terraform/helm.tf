@@ -9,7 +9,7 @@ resource "helm_release" "grafana" {
     service:
       type: LoadBalancer
       annotations:
-        external-dns.alpha.kubernetes.io/hostname: grafana.dummycorp.evilsysadmin.click
+        external-dns.alpha.kubernetes.io/hostname: ${local.grafana_hostname}
         external-dns.alpha.kubernetes.io/ttl: "60"
     datasources:
       datasources.yaml:

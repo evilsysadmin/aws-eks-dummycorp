@@ -6,6 +6,10 @@ resource "helm_release" "prometheus" {
 
   set = [
     {
+      name  = "server.service.annotations.external-dns\\.alpha\\.kubernetes\\.io/hostname"
+      value = local.prometheus_hostname
+    },
+    {
       name  = "server.service.type"
       value = "LoadBalancer"
     },

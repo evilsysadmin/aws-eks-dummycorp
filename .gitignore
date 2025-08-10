@@ -17,6 +17,7 @@ override.tf.json
 .env
 *.bak
 *.backup
+.tool-versions
 
 # Archivos de VS Code
 .vscode/
