@@ -18,3 +18,26 @@ variable "subnet_cidr_blocks" {
   type        = list(string)
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
+
+variable "instance_type" {
+  description = "EC2 instance type for EKS nodes"
+  type        = string
+  default     = "t3.medium"
+}
+
+variable "min_nodes" {
+  description = "Minimum number of nodes"
+  type        = number
+  default     = 1
+}
+
+variable "max_nodes" {
+  description = "Maximum number of nodes"
+  type        = number
+  default     = 3
+}
+
+variable "environment" {
+  type    = string
+  default = "dev"
+}
